@@ -35,8 +35,16 @@ RUN cmake -B build \
     -DBUILD_SHARED_LIBS=ON \
     -DCMAKE_BUILD_TYPE=Release \
     -DFAISS_OPT_LEVEL=avx2 \
+    -DFAISS_ENABLE_C_API=ON \
     .
 
 RUN make -C build -j4 faiss
 
-ENTRYPOINT ["ls", "-la"]
+RUN wget https://download.java.net/java/early_access/jextract/2/openjdk-19-jextract+2-3_linux-x64_bin.tar.gz \
+&& tar -xzvf openjdk-19-jextract+2-3_linux-x64_bin.tar.gz
+
+RUN cd build/c_api  \
+    && make \
+    && make install
+
+ENTRYPOINT ["echo", "hello"]
