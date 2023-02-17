@@ -6,29 +6,47 @@ import static test.faiss.index_factory_c_h.*;
 public class Main {
     public static void main(String[] args) {
         int k = 2;
-        Addressable faissIndex;
         MemorySegment queries;
         int queriesCount;
         MemorySegment distances;
         MemorySegment labels;
+
+        System.load("/faiss/build/c_api/libfaiss_c.so");
         try (MemorySession memorySession = MemorySession.openImplicit()) {
             int dimensionality = 4;
             MemorySegment indexFactorString = memorySession.allocateUtf8String("Flat");
-            faissIndex = MemoryAddress.NULL;
-            faiss_index_factory(faissIndex, dimensionality, indexFactorString, METRIC_L2());
+            // FaisIndex**
+            MemorySegment faissIndexPtrPtr = memorySession.allocate(C_POINTER);
 
-            MemorySegment vectors = memorySession.allocateArray(ValueLayout.JAVA_FLOAT, 1.0f, 1.1f, 1.2f, 1.3f, 2.1f, 2.2f, 2.3f, 2.4f);
+            // addr of FaisIndex**
+            MemoryAddress faisIndexPtrPtrAddress = faissIndexPtrPtr.address();
 
+            faiss_index_factory(faisIndexPtrPtrAddress, dimensionality, indexFactorString, METRIC_L2());
+
+            //dereference FaisIndex** to get FaisIndex*
+            MemoryAddress faissIndex = faisIndexPtrPtrAddress.get(C_POINTER, 0);
+
+            MemorySegment vectors = memorySession.allocateArray(C_FLOAT, 1.0f, 1.1f, 1.2f, 1.56f, 2.78f, 2.322f, 2.3f, 2.4f);
             System.out.println("index size: " + faiss_Index_ntotal(faissIndex));
 
-            faiss_Index_add(faissIndex, 4L, vectors);
+            faiss_Index_add(faissIndex, 2L, vectors);
 
-            queries = memorySession.allocateArray(ValueLayout.JAVA_FLOAT, 1.0f, 1.1f, 1.2f, 1.3f);
+            System.out.println("added vectors: " + faiss_Index_ntotal(faissIndex));
+
+            queries = memorySession.allocateArray(C_FLOAT, 1.0f, 1.1f, 1.2f, 1.3f);
             queriesCount = 1;
 
             distances = memorySession.allocateArray(ValueLayout.JAVA_FLOAT, queriesCount * k);
-            labels = memorySession.allocate(faiss_idx_t, queriesCount * k);
+            labels = memorySession.allocateArray(faiss_idx_t, queriesCount * k);
             faiss_Index_search(faissIndex, queriesCount, queries, k, distances, labels);
+
+            for (int i = 0; i < k; i++) {
+                System.out.println("distance: " + distances.get(C_FLOAT, i * C_FLOAT.byteSize()));
+            }
+
+            for (int i = 0; i < k; i++) {
+                System.out.println("labels: " + labels.get(faiss_idx_t, i * faiss_idx_t.byteSize()));
+            }
         }
 
     }
