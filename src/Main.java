@@ -1,7 +1,9 @@
+import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
+import java.lang.foreign.ValueLayout;
 
-import java.lang.foreign.*;
-
-import static test.faiss.index_factory_c_h.*;
+import static fb.faiss.faiss.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -11,7 +13,6 @@ public class Main {
         MemorySegment distances;
         MemorySegment labels;
 
-        System.load("/faiss/build/c_api/libfaiss_c.so");
         try (MemorySession memorySession = MemorySession.openImplicit()) {
             int dimensionality = 4;
             MemorySegment indexFactorString = memorySession.allocateUtf8String("Flat");
@@ -48,7 +49,6 @@ public class Main {
                 System.out.println("labels: " + labels.get(faiss_idx_t, i * faiss_idx_t.byteSize()));
             }
         }
-
     }
 
 }
