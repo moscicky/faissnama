@@ -1,6 +1,5 @@
-import java.lang.foreign.MemoryAddress;
+import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
 
 import static fb.faiss.faiss.*;
@@ -13,19 +12,20 @@ public class Main {
         MemorySegment distances;
         MemorySegment labels;
 
-        try (MemorySession memorySession = MemorySession.openImplicit()) {
+        try (var memorySession = Arena.openShared()) {
             int dimensionality = 4;
             MemorySegment indexFactorString = memorySession.allocateUtf8String("Flat");
             // FaisIndex**
             MemorySegment faissIndexPtrPtr = memorySession.allocate(C_POINTER);
 
             // addr of FaisIndex**
-            MemoryAddress faisIndexPtrPtrAddress = faissIndexPtrPtr.address();
+            long faisIndexPtrPtrAddress = faissIndexPtrPtr.address();
+            MemorySegment faisIndexPtrPtrSegment = MemorySegment.ofAddress(faisIndexPtrPtrAddress, C_POINTER.byteSize());
 
-            faiss_index_factory(faisIndexPtrPtrAddress, dimensionality, indexFactorString, METRIC_L2());
+            faiss_index_factory(faisIndexPtrPtrSegment, dimensionality, indexFactorString, METRIC_L2());
 
             //dereference FaisIndex** to get FaisIndex*
-            MemoryAddress faissIndex = faisIndexPtrPtrAddress.get(C_POINTER, 0);
+            MemorySegment faissIndex = faisIndexPtrPtrSegment.get(C_POINTER, 0);
 
             MemorySegment vectors = memorySession.allocateArray(C_FLOAT, 1.0f, 1.1f, 1.2f, 1.56f, 2.78f, 2.322f, 2.3f, 2.4f);
             System.out.println("index size: " + faiss_Index_ntotal(faissIndex));
