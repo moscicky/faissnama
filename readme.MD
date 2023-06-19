@@ -3,25 +3,32 @@
 This project shows how new `java.foreign` API (project Panama) can be used to 
 call C/C++ library - Faiss - from Java.
 
-## MaOS
-
-### Step 1 - build & install faiss
+## Step 1 - build & install faiss
 
 1. Download faiss
 
+    MacOS and Ubuntu:
     ```shell
     git clone https://github.com/facebookresearch/faiss.git
     cd faiss
     ```
 
-2. Install OpenMP
+2. Install dependencies
 
+    MacOS:
     ```shell
     brew install libomp
     ```
+   
+    Ubuntu:
+    ```shell
+    sudo apt-get install libomp-dev libblas-dev liblapack-dev
+    sudo snap install cmake --classic # the version in apt is too old
+    ```
 
-3. Create build directory
+3. Create build configuration
 
+    MacOS:
     ```shell
     cmake -B build \
     -DFAISS_ENABLE_GPU=OFF \
@@ -41,37 +48,65 @@ call C/C++ library - Faiss - from Java.
     .
     ```
 
+    Ubuntu:
+    ```shell
+    cmake . -B build \
+    -DFAISS_ENABLE_GPU=OFF \
+    -DFAISS_ENABLE_PYTHON=OFF \
+    -DFAISS_OPT_LEVEL=avx2 \
+    -DFAISS_ENABLE_C_API=ON \
+    -DBUILD_SHARED_LIBS=ON    
+    ```
+   
 4. Build faiss
 
+    MacOS and Ubuntu:
     ```shell
-   make -k -C build -j faiss
-   ```
+    cmake --build build --config Release -j
+    ```
 
 5. build & install faiss C API
+
+    MacOS:
     ```shell
     cd build/c_api && make && sudo make install
     sudo cp libfaiss_c.dylib /usr/local/lib/  
+    ```
+   
+    Ubuntu:
+    ```shell
+    cd build/c_api && make && sudo make install
+    sudo cp libfaiss_c.so /usr/local/lib/  
     ```
 
 ## Step 2 - generate C bindings
 
 1. Download & extract jextract
 
-   ```shell
-   wget https://download.java.net/java/early_access/jextract/2/openjdk-19-jextract+2-3_macos-x64_bin.tar.gz
-   && tar -xzf openjdk-19-jextract+2-3_macos-x64_bin.tar.gz
-   ```
+    MacOS:
+    ```shell
+    wget https://download.java.net/java/early_access/jextract/1/openjdk-20-jextract+1-2_macos-x64_bin.tar.gz
+    && tar -xzf openjdk-20-jextract+1-2_macos-x64_bin.tar.gz
+    ```
+   
+    Ubuntu:
+    ```shell
+    wget https://download.java.net/java/early_access/jextract/1/openjdk-20-jextract+1-2_linux-x64_bin.tar.gz
+    && tar -xzf openjdk-20-jextract+1-2_linux-x64_bin.tar.gz
+    ```
 
 2. Generate faiss C bindings (they will be created in `faiss` directory)
 
-   ```shell
-   cd scripts && ./create_bindings.sh
-   ```
+    MacOS:
+    ```shell
+    cd scripts && ./create_bindings.sh
+    ```
 
-## Linux
-todo
-   
+    Ubuntu:
+    ```shell
+    cd scripts && ./create_bindings_ubuntu.sh
+    ```
+
 ### Reference
 
 - https://github.com/carldea/panama4newbies
-
